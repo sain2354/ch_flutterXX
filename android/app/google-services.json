@@ -1,0 +1,47 @@
+{
+  "project_info": {
+    "project_number": "145492315168",
+    "project_id": "auth-ff8f2",
+    "storage_bucket": "auth-ff8f2.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:145492315168:android:e487ba6636aa47c4070045",
+        "android_client_info": {
+          "package_name": "com.calzadoshuancayo.miapp"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "145492315168-g442c0jlkds3oogeaq045vktgvu85lst.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.calzadoshuancayo.miapp",
+            "certificate_hash": "035c08a821578349eacbdca377770fba75fead38"
+          }
+        },
+        {
+          "client_id": "145492315168-6eviep5t621ta99onb48206b847jg09h.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyD--LkMqs9j5wsddtCxGKnlRZiUSRPxoxg"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "145492315168-6eviep5t621ta99onb48206b847jg09h.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

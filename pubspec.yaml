@@ -1,0 +1,43 @@
+name: ch_flutter
+description: "A new Flutter project."
+version: 1.0.0+1
+
+environment:
+  sdk: ^3.6.0
+
+dependencies:
+  flutter:
+    sdk: flutter
+  provider: ^6.0.5
+  http: ^0.13.6
+  font_awesome_flutter: ^10.4.0
+  cupertino_icons: ^1.0.8
+  shared_preferences: ^2.0.17
+  # Firebase
+  firebase_core: ^3.12.1
+  firebase_auth: ^5.5.1
+  google_sign_in: ^6.1.5
+  # Maps
+  google_maps_flutter: ^2.11.0
+  url_launcher: ^6.1.9
+  flutter_inappwebview: ^6.1.5
+  #pago
+  image_picker: ^0.8.7+4
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^5.0.0
+
+flutter:
+  uses-material-design: true
+
+  assets:
+    - assets/images/shoe1.png
+    - assets/images/shoe2.png
+    - assets/images/shoe3.png
+    - assets/images/bienvenido.png
+    - assets/images/yape.png
+    - assets/images/plin.png
+    - assets/images/yape_qr.png
+    - assets/images/plin_qr.png
