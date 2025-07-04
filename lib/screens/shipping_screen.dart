@@ -27,18 +27,13 @@ class _ShippingScreenState extends State<ShippingScreen> {
 
   // Ubicación fija de la tienda para el cálculo de distancia
   final LatLng storeLocation = const LatLng(-12.06849, -75.20538);
-  // Tarifa por km (ejemplo: S/ 0.50)
+  // Tarifa por km
   final double ratePerKm = 0.50;
 
-  // Dirección seleccionada y sus valores
   Address? _selectedAddress;
   double? _distanceKm;
   double? _shippingCost;
-
-  // Descuento (por ahora, 0.0)
   final double _discount = 0.0;
-
-  // Para detectar cambios de usuario en caliente
   int? _lastUserId;
 
   @override
@@ -47,11 +42,11 @@ class _ShippingScreenState extends State<ShippingScreen> {
     _tryLoadAddresses();
   }
 
-  /// Verifica si el usuario está logueado y carga direcciones.
   Future<void> _tryLoadAddresses() async {
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
     final userId = authProvider.loggedUserId;
     if (userId == null) {
+      if (!mounted) return;
       setState(() {
         isLoading = false;
         savedAddresses = [];
@@ -61,7 +56,6 @@ class _ShippingScreenState extends State<ShippingScreen> {
     await _loadAddresses(userId);
   }
 
-  /// Carga las direcciones reales del usuario desde el servicio
   Future<void> _loadAddresses(int userId) async {
     setState(() => isLoading = true);
     try {
@@ -97,19 +91,17 @@ class _ShippingScreenState extends State<ShippingScreen> {
     }
   }
 
-  /// Calcula la distancia entre dos coordenadas usando la fórmula de Haversine
   double _calculateDistance(LatLng start, LatLng end) {
-    const p = 0.017453292519943295; // pi / 180
+    const p = 0.017453292519943295;
     final a = 0.5 -
         cos((end.latitude - start.latitude) * p) / 2 +
         cos(start.latitude * p) *
             cos(end.latitude * p) *
             (1 - cos((end.longitude - start.longitude) * p)) /
             2;
-    return 12742 * asin(sqrt(a)); // 2 * R; R = 6371 km
+    return 12742 * asin(sqrt(a));
   }
 
-  /// Lógica para seleccionar una dirección
   void _onSelectAddress(Address addr) {
     setState(() {
       _selectedAddress = addr;
@@ -123,6 +115,7 @@ class _ShippingScreenState extends State<ShippingScreen> {
       _shippingCost = _distanceKm! * ratePerKm;
     });
 
+    if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text('Dirección seleccionada: ${addr.direccion}')),
     );
@@ -132,13 +125,12 @@ class _ShippingScreenState extends State<ShippingScreen> {
   Widget build(BuildContext context) {
     final cartProvider = Provider.of<CartProvider>(context);
     final cartTotal = cartProvider.totalPrice;
+    // Nunca nulo
     final shippingCost = _shippingCost ?? 0.0;
     final total = cartTotal - _discount + shippingCost;
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Calzados'),
-      ),
+      appBar: AppBar(title: const Text('Calzados')),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Column(
@@ -176,55 +168,48 @@ class _ShippingScreenState extends State<ShippingScreen> {
               child: ElevatedButton(
                 onPressed: () async {
                   if (_selectedAddress == null) {
+                    if (!mounted) return;
                     ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(
-                        content: Text('Por favor selecciona una dirección'),
-                      ),
+                          content:
+                              Text('Por favor selecciona una dirección')),
                     );
                     return;
                   }
-                  // Obtener el idUsuario del AuthProvider
                   final authProvider =
                       Provider.of<AuthProvider>(context, listen: false);
                   final userId = authProvider.loggedUserId;
                   if (userId == null) {
+                    if (!mounted) return;
                     ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Debes iniciar sesión')),
+                      const SnackBar(
+                          content: Text('Debes iniciar sesión')),
                     );
                     return;
                   }
 
-                  // Calcular total de la venta (productos + costo de envío - descuento)
-                  final double totalVenta =
-                      (Provider.of<CartProvider>(context, listen: false)
-                                  .totalPrice -
-                              _discount) +
-                          (_shippingCost ?? 0.0);
-
-                  // Crear la venta en el backend a través del PaymentService
-                  final paymentService = PaymentService();
-                  final ventaId = await paymentService.createVenta(
-                    total: totalVenta,
+                  final pagoService = PagoService();
+                  final ventaId = await pagoService.createVenta(
+                    total: total,
                     idUsuario: userId,
-                    comprobante: "Boleta",
-                    costoEnvio: _shippingCost ?? 0.0,
+                    tipoComprobante: 'Boleta',
+                    costoEnvio: shippingCost,
                   );
-
                   if (ventaId == null) {
+                    if (!mounted) return;
                     ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(content: Text('Error al crear la venta')),
                     );
                     return;
                   }
 
-                  // Navegar a la pantalla de pago manual, pasando el idVenta y el total
                   if (!mounted) return;
                   Navigator.push(
                     context,
                     MaterialPageRoute(
                       builder: (_) => PaymentScreen(
                         ventaId: ventaId,
-                        montoTotal: total,  // <-- añadido aquí
+                        montoTotal: total,
                       ),
                     ),
                   );
@@ -284,10 +269,8 @@ class _ShippingScreenState extends State<ShippingScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
-          'Tus direcciones guardadas',
-          style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-        ),
+        const Text('Tus direcciones guardadas',
+            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
         const SizedBox(height: 8),
         ListView.builder(
           shrinkWrap: true,
@@ -302,7 +285,7 @@ class _ShippingScreenState extends State<ShippingScreen> {
                 subtitle: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    if (addr.referencia != null && addr.referencia!.isNotEmpty)
+                    if (addr.referencia?.isNotEmpty ?? false)
                       Text('Ref: ${addr.referencia}'),
                     Text('ID: ${addr.id}'),
                     if (addr.lat != null && addr.lng != null)
@@ -322,8 +305,11 @@ class _ShippingScreenState extends State<ShippingScreen> {
     );
   }
 
-  Widget _shippingOption(BuildContext context,
-      {required String title, required VoidCallback onTap}) {
+  Widget _shippingOption(
+    BuildContext context, {
+    required String title,
+    required VoidCallback onTap,
+  }) {
     return SizedBox(
       width: double.infinity,
       child: OutlinedButton(
@@ -337,7 +323,10 @@ class _ShippingScreenState extends State<ShippingScreen> {
   }
 
   Widget _buildCostSummary(
-      double cartTotal, double shippingCost, double total) {
+    double cartTotal,
+    double shippingCost,
+    double total,
+  ) {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -356,12 +345,37 @@ class _ShippingScreenState extends State<ShippingScreen> {
               : Text('Costo de envío: S/ ${shippingCost.toStringAsFixed(2)}'),
           const SizedBox(height: 4),
           const Divider(),
-          Text(
-            'Total: S/ ${total.toStringAsFixed(2)}',
-            style: const TextStyle(fontWeight: FontWeight.bold),
-          ),
+          Text('Total: S/ ${total.toStringAsFixed(2)}',
+              style: const TextStyle(fontWeight: FontWeight.bold)),
         ],
       ),
     );
   }
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

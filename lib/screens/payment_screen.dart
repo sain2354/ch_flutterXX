@@ -1,9 +1,7 @@
-import 'dart:convert';
 import 'dart:io';
-
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:http/http.dart' as http;
+import '../services/pago_service.dart';
 
 class PaymentScreen extends StatefulWidget {
   final int ventaId;
@@ -39,7 +37,9 @@ class _PaymentScreenState extends State<PaymentScreen> {
       maxHeight: 800,
       imageQuality: 80,
     );
-    if (file != null && mounted) setState(() => _pickedImage = file);
+    if (file != null && mounted) {
+      setState(() => _pickedImage = file);
+    }
   }
 
   Future<void> _submitComprobante() async {
@@ -50,37 +50,24 @@ class _PaymentScreenState extends State<PaymentScreen> {
       );
       return;
     }
-    if (mounted) setState(() => isSubmitting = true);
 
-    // Lee y codifica la imagen si existe
-    String? base64Image;
-    if (_pickedImage != null) {
-      final bytes = await File(_pickedImage!.path).readAsBytes();
-      base64Image = base64Encode(bytes);
-    }
+    setState(() => isSubmitting = true);
 
-    // Construye el JSON
-    final body = {
-      'idVenta': widget.ventaId,
-      'montoPagado': widget.montoTotal.toStringAsFixed(2),
-      'idMedioPago': _selectedMethod == 'yape' ? 1 : 2,
-      if (_txController.text.trim().isNotEmpty)
-        'idTransaccionMP': _txController.text.trim(),
-      if (base64Image != null) 'comprobanteManual': base64Image,
-    };
-
-    // Llámalo a tu endpoint JSON
-    final uri = Uri.parse('http://www.chbackend.somee.com/api/Pago');
-    final res = await http.post(
-      uri,
-      headers: {'Content-Type': 'application/json'},
-      body: jsonEncode(body),
+    // Llamamos al service que usa MultipartRequest
+    final success = await PagoService().uploadComprobante(
+      idVenta: widget.ventaId,
+      filePath: _pickedImage!.path,
+      montoPagado: widget.montoTotal,
+      fechaPago: DateTime.now(),                 // se convierte en form
+      idMedioPago: _selectedMethod == 'yape' ? 1 : 2,
+      idTransaccionMP: _txController.text.trim(),
+      estadoPago: 'Pendiente',
     );
 
     if (!mounted) return;
     setState(() => isSubmitting = false);
 
-    if (res.statusCode == 200 || res.statusCode == 201) {
+    if (success) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Comprobante enviado correctamente')),
       );
@@ -91,7 +78,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
       );
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error ${res.statusCode}: ${res.body}')),
+        const SnackBar(content: Text('Error enviando comprobante')),
       );
     }
   }
@@ -152,7 +139,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
   @override
   Widget build(BuildContext context) {
     final number =
-        _selectedMethod == 'yape' ? '+51 987 654 321' : '+51 987 654 322';
+        _selectedMethod == 'yape' ? '+51 987 654 321' : '+51 987 654 322';
 
     return Scaffold(
       appBar: AppBar(title: const Text('Pago Manual (Yape/Plin)')),

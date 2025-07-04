@@ -218,6 +218,7 @@ class _ProductScreenState extends State<ProductScreen> {
       }
     });
   }
+  
 
   /// Filtra los productos por la marca seleccionada dentro de la categoría actual
   void filterByBrand(String brand) {
